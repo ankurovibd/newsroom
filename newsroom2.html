@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsroomSim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #1c1e21;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 1rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .profile-picture {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .image-post {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .interactive-icon {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .interactive-icon:hover {
+            transform: scale(1.1);
+        }
+        .breaking-news {
+            background-image: url('https://placehold.co/600x300/e53e3e/ffffff?text=BREAKING+NEWS');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .comment-input {
+            width: 100%;
+            border-radius: 9999px;
+            padding: 8px 16px;
+            background-color: #f0f2f5;
+            border: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+
+<div class="container space-y-4">
+
+    <!-- Header Section -->
+    <div class="flex justify-between items-center py-4">
+        <h1 class="text-2xl font-bold">NewsroomSim</h1>
+        <div class="flex items-center space-x-2">
+            <span id="user-info" class="text-sm font-semibold text-gray-600 mr-2">Loading...</span>
+            <button id="auth-btn" class="bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-600 transition-colors">Log In</button>
+        </div>
+    </div>
+
+    <!-- Post Creation Form -->
+    <div class="card p-4 space-y-2">
+        <h2 class="text-xl font-bold">Create a New Post</h2>
+        <select id="post-type" class="w-full p-2 border rounded-md">
+            <option value="news">News</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+        </select>
+        <input type="text" id="post-full-name" placeholder="Full Name" class="w-full p-2 border rounded-md">
+        <input type="text" id="post-caption" placeholder="What's the news?" class="w-full p-2 border rounded-md">
+        <textarea id="post-details" placeholder="News Details..." class="w-full p-2 border rounded-md"></textarea>
+        <input type="file" id="media-upload-btn" class="w-full p-2 border rounded-md cursor-pointer">
+        <textarea id="media-link" placeholder="Or paste a link/embed code..." class="w-full p-2 border rounded-md"></textarea>
+        <button id="create-post-btn" class="w-full bg-blue-500 text-white font-semibold py-2 rounded-md hover:bg-blue-600 transition-colors">Post News</button>
+    </div>
+
+    <!-- Breaking News Post -->
+    <div class="card p-4 space-y-2">
+        <div class="flex items-center space-x-2">
+            <img src="https://placehold.co/40x40/4a5568/ffffff?text=RN" alt="News Reporter Profile" class="profile-picture">
+            <div>
+                <div class="font-bold">Breaking News</div>
+                <div class="text-xs text-gray-500">2 min ago</div>
+            </div>
+        </div>
+        <div class="text-sm font-semibold">BREAKING: Oil Spill Disaster</div>
+        <div class="breaking-news rounded-xl flex items-end justify-start p-4 h-48 sm:h-64">
+            <div class="text-sm">
+                <p class="font-bold">Live Coverage</p>
+                <p class="font-light">Developing story on the massive oil spill...</p>
+            </div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500">
+            <div>
+                <span class="mr-1">❤️</span> 12.3K
+            </div>
+            <div>
+                34 Comments
+            </div>
+        </div>
+        <hr class="border-t border-gray-200">
+        <div class="flex justify-around text-gray-500">
+            <div class="flex items-center space-x-1 interactive-icon">
+                <span class="text-xl">👍</span>
+                <span class="text-sm">Like</span>
+            </div>
+            <div class="flex items-center space-x-1 interactive-icon" id="comment-btn-static">
+                <span class="text-xl">💬</span>
+                <span class="text-sm">Comment</span>
+            </div>
+            <div class="flex items-center space-x-1 interactive-icon" id="share-btn-static">
+                <span class="text-xl">📤</span>
+                <span class="text-sm">Share</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Replicated Image Feed -->
+    <div id="image-feed" class="space-y-4">
+        <!-- Posts will be dynamically added here -->
+    </div>
+
+</div>
+
+<!-- Authentication Modal -->
+<div id="auth-modal" class="modal">
+    <div class="card p-6 w-96 space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 id="auth-title" class="text-xl font-bold">Log In</h2>
+            <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+        </div>
+        <div id="auth-message" class="text-red-500 text-sm"></div>
+        <div class="space-y-2">
+            <input type="email" id="auth-email" placeholder="Email" class="w-full p-2 border rounded-md">
+            <input type="password" id="auth-password" placeholder="Password" class="w-full p-2 border rounded-md">
+        </div>
+        <button id="auth-submit-btn" class="w-full bg-blue-500 text-white font-semibold py-2 rounded-md hover:bg-blue-600 transition-colors">Log In</button>
+        <div class="text-sm text-center">
+            <a href="#" id="auth-toggle-link" class="text-blue-500 hover:underline">Need an account? Register</a>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, query, addDoc, updateDoc, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    setLogLevel('debug'); // Set Firestore logging to debug mode
+
+    // Global variables for Firebase configuration provided by the environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let app, db, auth;
+    let userId;
+    let isRegistering = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            // Handle user authentication state changes
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('user-info').textContent = user.email ? `Logged in as: ${user.email}` : `User ID: ${userId.substring(0, 8)}...`;
+                    document.getElementById('auth-btn').textContent = 'Log Out';
+                    document.getElementById('auth-modal').style.display = 'none';
+                    setupRealtimeFeed(); // Start the feed only after authentication is confirmed
+                } else {
+                    // Sign in anonymously if no user is authenticated
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    document.getElementById('user-info').textContent = 'Not logged in';
+                    document.getElementById('auth-btn').textContent = 'Log In';
+                }
+            });
+
+            // Handle UI events
+            document.getElementById('auth-btn').addEventListener('click', () => {
+                if (auth.currentUser) {
+                    signOut(auth).catch(e => console.error("Error signing out:", e));
+                } else {
+                    document.getElementById('auth-modal').style.display = 'flex';
+                }
+            });
+
+            document.getElementById('close-modal-btn').addEventListener('click', () => {
+                document.getElementById('auth-modal').style.display = 'none';
+            });
+            
+            document.getElementById('auth-toggle-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                isRegistering = !isRegistering;
+                document.getElementById('auth-title').textContent = isRegistering ? 'Register' : 'Log In';
+                document.getElementById('auth-submit-btn').textContent = isRegistering ? 'Register' : 'Log In';
+                document.getElementById('auth-toggle-link').textContent = isRegistering ? 'Already have an account? Log In' : 'Need an account? Register';
+                document.getElementById('auth-message').textContent = '';
+            });
+
+            document.getElementById('auth-submit-btn').addEventListener('click', async () => {
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                const messageEl = document.getElementById('auth-message');
+                messageEl.textContent = '';
+                
+                if (isRegistering) {
+                    try {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    } catch (error) {
+                        messageEl.textContent = error.message;
+                    }
+                } else {
+                    try {
+                        await signInWithEmailAndPassword(auth, email, password);
+                    } catch (error) {
+                        messageEl.textContent = error.message;
+                    }
+                }
+            });
+
+            // Handle new post creation
+            document.getElementById('create-post-btn').addEventListener('click', async () => {
+                if (!auth.currentUser) {
+                    showMessageBox("You must be logged in to create a post.");
+                    return;
+                }
+
+                const captionInput = document.getElementById('post-caption');
+                const postTypeSelect = document.getElementById('post-type');
+                const fullNameInput = document.getElementById('post-full-name');
+                const newsDetailsInput = document.getElementById('post-details');
+                const mediaLinkInput = document.getElementById('media-link');
+                const mediaUploadInput = document.getElementById('media-upload-btn');
+                
+                const caption = captionInput.value;
+                const postType = postTypeSelect.value;
+                const fullName = fullNameInput.value;
+                const newsDetails = newsDetailsInput.value;
+                const mediaLink = mediaLinkInput.value;
+                const mediaFile = mediaUploadInput.files[0];
+
+                if (caption.trim() === "") return;
+
+                const postsCollection = collection(db, `artifacts/${appId}/public/data/posts`);
+
+                let mediaUrl = mediaLink;
+                if (mediaFile) {
+                    // In a real application, you would upload the file to Firebase Storage
+                    // and get a URL here. For this single-file demo, we'll use a local URL.
+                    mediaUrl = URL.createObjectURL(mediaFile);
+                }
+                
+                try {
+                    await addDoc(postsCollection, {
+                        user_id: userId,
+                        full_name: fullName,
+                        caption: caption,
+                        details: newsDetails,
+                        timestamp: Date.now(),
+                        likes: 0,
+                        post_type: postType,
+                        media_url: mediaUrl
+                    });
+                    captionInput.value = "";
+                    fullNameInput.value = "";
+                    newsDetailsInput.value = "";
+                    mediaLinkInput.value = "";
+                    mediaUploadInput.value = "";
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                }
+            });
+
+        } catch (e) {
+            console.error("Error initializing Firebase:", e);
+        }
+    });
+
+    function setupRealtimeFeed() {
+        const feedContainer = document.getElementById('image-feed');
+        const postsCollectionRef = collection(db, `artifacts/${appId}/public/data/posts`);
+        const q = query(postsCollectionRef);
+
+        onSnapshot(q, (snapshot) => {
+            const posts = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                posts.push({ id: doc.id, ...data });
+            });
+            
+            // Sort posts by timestamp descending
+            posts.sort((a, b) => b.timestamp - a.timestamp);
+
+            feedContainer.innerHTML = ''; // Clear the existing feed
+
+            if (posts.length === 0) {
+                feedContainer.innerHTML = '<p class="text-center text-gray-500">No posts yet. Be the first to post!</p>';
+            } else {
+                posts.forEach(post => createPost(post));
+            }
+        });
+    }
+
+    function createPost(post) {
+        const feedContainer = document.getElementById('image-feed');
+        const postElement = document.createElement('div');
+        postElement.className = 'card p-4 space-y-2';
+        
+        const likesText = post.likes !== undefined ? `${post.likes} Likes` : '0 Likes';
+        const timeAgo = new Date(post.timestamp).toLocaleString();
+        const userName = post.full_name || (post.user_id ? post.user_id.substring(0, 8) + '...' : 'Anonymous');
+        const profileImageText = post.user_id ? post.user_id.substring(0,2) : "AN";
+
+        const defaultImageNews = "https://placehold.co/600x400/3182ce/ffffff?text=News+Image";
+        const defaultImageFacebook = "https://placehold.co/600x400/4267B2/ffffff?text=Facebook+Image";
+        const defaultImageInstagram = "https://placehold.co/600x600/E1306C/ffffff?text=Instagram+Image";
+        
+        const mediaHtml = post.media_url ? `<img src="${post.media_url}" alt="Post Image" class="image-post">` : '';
+
+        let postContentHtml = '';
+
+        if (post.post_type === 'facebook') {
+            postContentHtml = `
+                <div class="flex items-center space-x-2">
+                    <img src="https://placehold.co/40x40/4267B2/ffffff?text=FB" alt="Facebook Profile" class="profile-picture">
+                    <div>
+                        <div class="font-bold">${userName}</div>
+                        <div class="text-xs text-gray-500">${timeAgo}</div>
+                    </div>
+                </div>
+                <div class="text-sm">${post.caption}</div>
+                <div class="text-sm text-gray-700">${post.details ? post.details.replace(/\n/g, '<br>') : ''}</div>
+                ${post.media_url ? mediaHtml : `<img src="${defaultImageFacebook}" alt="Post Image" class="image-post">`}
+                <div class="flex justify-between text-xs text-gray-500">
+                    <div id="likes-count-${post.id}">
+                        <span class="mr-1">👍</span> ${likesText}
+                    </div>
+                </div>
+                <hr class="border-t border-gray-200">
+                <div class="flex justify-around text-gray-500">
+                    <div id="like-btn-${post.id}" class="flex items-center space-x-1 interactive-icon cursor-pointer">
+                        <span class="text-xl">👍</span>
+                        <span class="text-sm">Like</span>
+                    </div>
+                    <div id="comment-btn-${post.id}" class="flex items-center space-x-1 interactive-icon cursor-pointer">
+                        <span class="text-xl">💬</span>
+                        <span class="text-sm">Comment</span>
+                    </div>
+                    <div id="share-btn-${post.id}" class="flex items-center space-x-1 interactive-icon cursor-pointer">
+                        <span class="text-xl">📤</span>
+                        <span class="text-sm">Share</span>
+                    </div>
+                </div>
+            `;
+        } else if (post.post_type === 'instagram') {
+            postContentHtml = `
+                <div class="flex items-center space-x-2">
+                    <img src="https://placehold.co/40x40/E1306C/ffffff?text=IG" alt="Instagram Profile" class="profile-picture">
+                    <div>
+                        <div class="font-bold">${userName}</div>
+                    </div>
+                </div>
+                ${post.media_url ? mediaHtml : `<img src="${defaultImageInstagram}" alt="Post Image" class="image-post">`}
+                <div class="flex justify-between text-2xl text-gray-500">
+                    <span id="like-btn-${post.id}" class="interactive-icon cursor-pointer">❤️</span>
+                    <span id="comment-btn-${post.id}" class="interactive-icon cursor-pointer">💬</span>
+                    <span id="share-btn-${post.id}" class="interactive-icon cursor-pointer">📤</span>
+                </div>
+                <div class="text-xs text-gray-500 font-bold">${likesText}</div>
+                <div class="text-sm">
+                    <span class="font-bold">${userName}</span> ${post.caption}
+                    <div class="text-xs text-gray-700">${post.details ? post.details.replace(/\n/g, '<br>') : ''}</div>
+                </div>
+            `;
+        } else { // Default to 'news'
+            postContentHtml = `
+                <div class="flex items-center space-x-2">
+                    <img src="https://placehold.co/40x40/6b7280/ffffff?text=${profileImageText}" alt="Profile" class="profile-picture">
+                    <div>
+                        <div class="font-bold">${userName}</div>
+                        <div class="text-xs text-gray-500">${timeAgo}</div>
+                    </div>
+                </div>
+                <div class="text-sm font-semibold">${post.caption}</div>
+                <div class="text-sm text-gray-700">${post.details ? post.details.replace(/\n/g, '<br>') : ''}</div>
+                ${post.media_url ? mediaHtml : `<img src="${defaultImageNews}" alt="Post Image" class="image-post">`}
+                <div class="flex justify-between text-xs text-gray-500">
+                    <div id="likes-count-${post.id}">
+                        <span class="mr-1">❤️</span> ${likesText}
+                    </div>
+                </div>
+                <hr class="border-t border-gray-200">
+                <div class="flex justify-around text-gray-500">
+                    <div id="like-btn-${post.id}" class="flex items-center space-x-1 interactive-icon cursor-pointer">
+                        <span class="text-xl">👍</span>
+                        <span class="text-sm">Like</span>
+                    </div>
+                    <div id="comment-btn-${post.id}" class="flex items-center space-x-1 interactive-icon cursor-pointer">
+                        <span class="text-xl">💬</span>
+                        <span class="text-sm">Comment</span>
+                    </div>
+                    <div id="share-btn-${post.id}" class="flex items-center space-x-1 interactive-icon cursor-pointer">
+                        <span class="text-xl">📤</span>
+                        <span class="text-sm">Share</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        postElement.innerHTML = postContentHtml;
+        feedContainer.appendChild(postElement);
+
+        // Attach event listeners for this specific post.
+        const likeButton = document.getElementById(`like-btn-${post.id}`);
+        if (likeButton) {
+            likeButton.addEventListener('click', async () => {
+                const postRef = doc(db, `artifacts/${appId}/public/data/posts`, post.id);
+                try {
+                    await updateDoc(postRef, {
+                        likes: (post.likes || 0) + 1
+                    });
+                } catch (e) {
+                    console.error("Error updating document:", e);
+                }
+            });
+        }
+        
+        const commentButton = document.getElementById(`comment-btn-${post.id}`);
+        if (commentButton) {
+            commentButton.addEventListener('click', () => {
+                const message = `Commenting on post ${post.id} is not yet implemented.`;
+                showMessageBox(message);
+            });
+        }
+
+        const shareButton = document.getElementById(`share-btn-${post.id}`);
+        if (shareButton) {
+            shareButton.addEventListener('click', () => {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url)
+                    .then(() => showMessageBox('Link copied to clipboard!'))
+                    .catch(err => console.error('Failed to copy text: ', err));
+            });
+        }
+    }
+
+    function showMessageBox(message) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="card p-6 w-80 space-y-4 text-center">
+                <p class="text-lg font-semibold">${message}</p>
+                <button onclick="this.parentNode.parentNode.style.display='none'" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-md">OK</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.style.display = 'flex';
+    }
+</script>
+
+</body>
+</html>
